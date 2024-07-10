@@ -9,8 +9,8 @@ if [[ -z "$hostname" ]]; then
 fi
 
 run_command() {
-    echo "Выполнение команды: $@"
-    "$@"
+    echo "Выполнение команды: sudo $@"
+    sudo "$@"
     local status=$?
     if [ $status -ne 0 ]; then
         echo "Ошибка при выполнении команды: $1"
@@ -22,8 +22,8 @@ run_command() {
 
 remove_old_zabbix(){
     echo "Начало удаления старого агента Zabbix"
-    if [[ $(sudo systemctl list-units --full -all | grep "zabbix-agent" | wc -l) -gt 0 ]]; then
-        run_command sudo systemctl stop zabbix-agent
+    if [[ $(systemctl list-units --full -all | grep "zabbix-agent" | wc -l) -gt 0 ]]; then
+        run_command systemctl stop zabbix-agent
         run_command apt remove -y zabbix-agent
     fi
     if [[ -d "/etc/zabbix/" ]]; then
@@ -40,8 +40,8 @@ install_zabbix(){
         run_command dpkg -i "zabbix-release_6.4-1+ubuntu20.04_all.deb"
         run_command apt-get update
         run_command apt-get install -y zabbix-agent
-        run_command sudo systemctl restart zabbix-agent
-        run_command sudo systemctl enable zabbix-agent
+        run_command systemctl restart zabbix-agent
+        run_command systemctl enable zabbix-agent
         run_command rm -f "zabbix-release_6.4-1+ubuntu20.04_all.deb"
     fi
     echo "Агент Zabbix установлен"
@@ -53,7 +53,7 @@ config_zabbix(){
     run_command sed -i "s/Server=.*/Server=$server_ip/g" /etc/zabbix/zabbix_agentd.conf
     run_command sed -i "s/ServerActive=.*/ServerActive=$server_ip/g" /etc/zabbix/zabbix_agentd.conf
     run_command sed -i "s/# HostMetadata=/HostMetadata=autoreg.linux/" /etc/zabbix/zabbix_agentd.conf
-    run_command sudo systemctl restart zabbix-agent
+    run_command systemctl restart zabbix-agent
     echo "Агент Zabbix сконфигурирован"
 }
 
