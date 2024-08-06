@@ -22,13 +22,25 @@ run_command() {
 
 remove_old_zabbix(){
     echo "Начало удаления старого агента Zabbix"
-    if [[ $(systemctl list-units --full -all | grep "zabbix-agent" | wc -l) -gt 0 ]]; then
+    if systemctl list-units --full -all | grep -q "zabbix-agent"; then
         run_command systemctl stop zabbix-agent
         run_command apt remove -y zabbix-agent
+
+        # Проверка на возможные проблемы с dpkg
+        if [[ $? -ne 0 ]]; then
+            echo "Ошибка при удалении пакета zabbix-agent. Попытка исправления..."
+            run_command sudo dpkg --configure -a
+            run_command apt remove -y zabbix-agent
+        fi
+    else
+        echo "Служба zabbix-agent не найдена, пропуск остановки службы и удаления пакета."
     fi
+    
+    # Проверка наличия каталога /etc/zabbix/
     if [[ -d "/etc/zabbix/" ]]; then
         run_command rm -rf /etc/zabbix/
     fi
+    
     echo "Старый агент Zabbix удалён"
 }
 
